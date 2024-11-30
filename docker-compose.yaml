@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+
+  # Node.js service
+  migrate-app:
+    image: build    # Use official Node.js image (version 18)
+    container_name: migrate-app
+    working_dir: /src/app
+    environment:
+      - PORT=3000
+      - DB_HOST=127.0.0.1
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_NAME=database_development
+      - DB_DIALECT=mysql
+      - NODE_ENV=development
+      - JWT_SECRET=your_jwt_secret
+    entrypoint: ["npm","run","migrate"]  # Use the entrypoint script to run migrations before starting the app
+    depends_on:
+      - mysql         # Ensure mysql is ready before starting Node.js
+    networks:
+      - app-network         # MySQL also on the same custom network
+
+  # Node.js service
+  node-app:
+    image: build    # Use official Node.js image (version 18)
+    container_name: node-app
+    working_dir: /src/app
+    # volumes:
+    #   - .:/app        # Mount current directory to /app in the container
+    ports:
+      - "3000:3000"   # Expose port 3000 (you can change it to your app's port)
+    environment:
+      - PORT=3000
+      - DB_HOST=127.0.0.1
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_NAME=database_development
+      - DB_DIALECT=mysql
+      - NODE_ENV=development
+      - JWT_SECRET=your_jwt_secret
+    depends_on:
+      - migrate-app         # Ensure mysql is ready before starting Node.js
+    networks:
+      - app-network         # MySQL also on the same custom network
+
+  # MySQL service
+  mysql:
+    image: mysql:8    # Use official MySQL 8 image
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password   # Set the MySQL root password
+      MYSQL_DATABASE: database_development                # Default database to create
+    ports:
+      - "3306:3306"   # Expose MySQL port
+    command: ["--mysqlx=0"]  # Disable X Plugin
+      
+    volumes:
+      - mysql-data:/var/lib/mysql   # Mount a volume for data persistence
+    networks:
+      - app-network         # MySQL also on the same custom network
+
+# Define volumes for persistent storage
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
+
