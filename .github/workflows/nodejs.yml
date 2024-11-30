@@ -45,7 +45,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
     - name: Log in to Heroku
@@ -54,5 +54,5 @@ jobs:
 
     - name: Push and Release to Heroku
       run: |
-        heroku container:push web --app your-heroku-app-name
-        heroku container:release web --app your-heroku-app-name
+        heroku container:set web --image=docker.io/${{ secrets.DOCKER_USERNAME }}/networth-tracker-backend:${{ github.sha }} -a hapi-js
+        heroku container:release web --app hapi-js
