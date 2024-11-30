@@ -1,6 +1,7 @@
 {
   "development": {
     "username": "root",
+    "use_env_variable":true,
     "password": "password",
     "database": "database_development",
     "host": "127.0.0.1",
