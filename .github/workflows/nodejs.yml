@@ -4,13 +4,13 @@ on:
   push:
     branches:
       - master
+      - feature/*
   pull_request:
     branches:
       - master
 
 jobs:
   build:
-    #  runs-on: ubuntu-latest
     runs-on: self-hosted
 
     steps:
@@ -37,49 +37,22 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-     
+
     - name: Push Docker image
       run: |
-        docker tag networth-tracker:${{ github.sha }} ${{secrets.DOCKER_USERNAME}}/networth-tracker-backend:${{ github.sha }}
-        docker push ${{secrets.DOCKER_USERNAME}}/networth-tracker-backend:${{ github.sha }}
+        docker tag networth-tracker:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/networth-tracker-backend:${{ github.sha }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/networth-tracker-backend:${{ github.sha }}
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-    - name: Deploy to Heroku
+    - name: Log in to Heroku
       run: |
-        curl https://cli-assets.heroku.com/install.sh | sh
-        heroku container:login
+        echo ${{ secrets.HEROKU_API_KEY }} | docker login --username=_ --password-stdin registry.heroku.com
+
+    - name: Push and Release to Heroku
+      run: |
         heroku container:push web --app your-heroku-app-name
         heroku container:release web --app your-heroku-app-name
-
-
-# name: Node.js CI/CD
-
-# on:
-#   push:
-#     branches: [main]
-
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#     - uses: actions/checkout@v3
-#     - name: Setup Node.js
-#       uses: actions/setup-node@v3
-#       with:
-#         node-version: '16'
-#     - run: npm install
-#     - run: npm test
-#     - name: Build Docker Image
-#       run: docker build -t networth-tracker:latest .
-#     - name: Push to Docker Hub
-#       env:
-#         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-#         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-#       run: |
-#         echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-#         docker push networth-tracker:latest
